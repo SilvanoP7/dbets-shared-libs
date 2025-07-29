@@ -21,20 +21,51 @@ go.work
 .env
 .env.local
 .env.production
+.env.development
+.env.test
 
 # IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Logs
 *.log
+logs/
 
 # Build outputs
 dist/
 build/
+bin/
+main
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Coverage reports
+coverage.txt
+coverage.html
+
+# Air (live reload)
+tmp/
+
+# Local development
+.local/
