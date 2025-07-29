@@ -1,4 +1,4 @@
-module github.com/SilvanoP7/shared-libs
+module github.com/SilvanoP7/dbets-shared-libs
 
 go 1.23
 
