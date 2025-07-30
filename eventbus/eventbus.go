@@ -168,6 +168,28 @@ type WalletUpdatedEvent struct {
 	Timestamp  string  `json:"timestamp"`
 }
 
+// UserCreatedEvent represents a user creation event
+type UserCreatedEvent struct {
+	UserID    string `json:"user_id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Timestamp string `json:"timestamp"`
+}
+
+// UserLoginEvent represents a user login event
+type UserLoginEvent struct {
+	UserID    string `json:"user_id"`
+	Email     string `json:"email"`
+	Timestamp string `json:"timestamp"`
+}
+
+// UserUpdatedEvent represents a user update event
+type UserUpdatedEvent struct {
+	UserID    string `json:"user_id"`
+	Email     string `json:"email"`
+	Timestamp string `json:"timestamp"`
+}
+
 // Helper functions for creating events
 
 // NewBetPlacedEvent creates a new bet placed event
@@ -243,5 +265,33 @@ func NewWalletUpdatedEvent(userID string, oldBalance, newBalance float64, change
 		Change:     newBalance - oldBalance,
 		Type:       changeType,
 		Timestamp:  time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewUserCreatedEvent creates a new user created event
+func NewUserCreatedEvent(userID, username, email string) *UserCreatedEvent {
+	return &UserCreatedEvent{
+		UserID:    userID,
+		Username:  username,
+		Email:     email,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewUserLoginEvent creates a new user login event
+func NewUserLoginEvent(userID, email string) *UserLoginEvent {
+	return &UserLoginEvent{
+		UserID:    userID,
+		Email:     email,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewUserUpdatedEvent creates a new user updated event
+func NewUserUpdatedEvent(userID, email string) *UserUpdatedEvent {
+	return &UserUpdatedEvent{
+		UserID:    userID,
+		Email:     email,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
 	}
 }
