@@ -161,6 +161,14 @@ type PlaceBetRequest struct {
 	Amount      float64   `json:"amount" binding:"required,gt=0"`
 }
 
+// PlaceAccumulatorBetRequest represents a request to place an accumulator bet
+type PlaceAccumulatorBetRequest struct {
+	Selections []PlaceBetRequest `json:"selections" binding:"required,min=1"`
+	Amount     float64           `json:"amount" binding:"required,gt=0"`
+}
+
+
+
 // DepositRequest represents a deposit request
 type DepositRequest struct {
 	Amount float64 `json:"amount" binding:"required,gt=0"`
