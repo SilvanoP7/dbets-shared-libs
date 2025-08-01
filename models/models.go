@@ -82,15 +82,24 @@ type Selection struct {
 type Bet struct {
 	ID           uuid.UUID `json:"id" db:"id"`
 	UserID       uuid.UUID `json:"user_id" db:"user_id"`
-	EventID      uuid.UUID `json:"event_id" db:"event_id"`
-	MarketID     uuid.UUID `json:"market_id" db:"market_id"`
-	SelectionID  uuid.UUID `json:"selection_id" db:"selection_id"`
+	BetType      string    `json:"bet_type" db:"bet_type"` // "single", "double", "treble", "accumulator"
 	Amount       float64   `json:"amount" db:"amount"`
-	Odds         float64   `json:"odds" db:"odds"`
+	TotalOdds    float64   `json:"total_odds" db:"total_odds"`
 	Status       string    `json:"status" db:"status"` // "pending", "won", "lost", "void", "cancelled"
 	PotentialWin float64   `json:"potential_win" db:"potential_win"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// BetSelection represents a selection within a bet (for accumulator bets)
+type BetSelection struct {
+	ID          uuid.UUID `json:"id" db:"id"`
+	BetID       uuid.UUID `json:"bet_id" db:"bet_id"`
+	EventID     uuid.UUID `json:"event_id" db:"event_id"`
+	MarketID    uuid.UUID `json:"market_id" db:"market_id"`
+	SelectionID uuid.UUID `json:"selection_id" db:"selection_id"`
+	Odds        float64   `json:"odds" db:"odds"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
 // Transaction represents a wallet transaction
@@ -235,6 +244,19 @@ type MarketResponse struct {
 // BetResponse represents a bet with additional info
 type BetResponse struct {
 	Bet
+	EventTitle    string `json:"event_title"`
+	MarketName    string `json:"market_name"`
+	SelectionName string `json:"selection_name"`
+	SportName     string `json:"sport_name"`
+}
+
+type BetWithSelectionsResponse struct {
+	Bet
+	Selections []BetSelectionWithDetails `json:"selections"`
+}
+
+type BetSelectionWithDetails struct {
+	BetSelection
 	EventTitle    string `json:"event_title"`
 	MarketName    string `json:"market_name"`
 	SelectionName string `json:"selection_name"`
