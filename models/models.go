@@ -42,6 +42,8 @@ type Event struct {
 	SportID     uuid.UUID `json:"sport_id" db:"sport_id"`
 	Title       string    `json:"title" db:"title"`
 	Description string    `json:"description" db:"description"`
+	Country     string    `json:"country" db:"country"`     // Country where the event takes place
+	League      string    `json:"league" db:"league"`       // League or competition name
 	HomeTeam    string    `json:"home_team" db:"home_team"`
 	AwayTeam    string    `json:"away_team" db:"away_team"`
 	StartTime   time.Time `json:"start_time" db:"start_time"`
