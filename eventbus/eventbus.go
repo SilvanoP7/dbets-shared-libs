@@ -276,12 +276,12 @@ func (n *NATSEventBus) CreateStream(config *nats.StreamConfig) error {
 
 // BetPlacedEvent represents a bet placement event
 type BetPlacedEvent struct {
-	BetID       string                 `json:"bet_id"`
-	UserID      string                 `json:"user_id"`
-	Amount      float64                `json:"amount"`
-	Odds        float64                `json:"odds"`
-	Selections  []BetSelection         `json:"selections"`
-	Timestamp   string                 `json:"timestamp"`
+	BetID      string         `json:"bet_id"`
+	UserID     string         `json:"user_id"`
+	Amount     float64        `json:"amount"`
+	Odds       float64        `json:"odds"`
+	Selections []BetSelection `json:"selections"`
+	Timestamp  string         `json:"timestamp"`
 }
 
 type BetSelection struct {
@@ -375,6 +375,33 @@ type BetFailedEvent struct {
 	FailedReason string                 `json:"failed_reason"`
 	RequestData  map[string]interface{} `json:"request_data"`
 	Timestamp    string                 `json:"timestamp"`
+}
+
+// EventUpdatedEvent represents an event update
+type EventUpdatedEvent struct {
+	EventID   string                 `json:"event_id"`
+	Version   int                    `json:"version"`
+	Changes   map[string]interface{} `json:"changes"` // Field name -> new value
+	Timestamp string                 `json:"timestamp"`
+}
+
+// MarketUpdatedEvent represents a market update
+type MarketUpdatedEvent struct {
+	MarketID  string                 `json:"market_id"`
+	EventID   string                 `json:"event_id"`
+	Version   int                    `json:"version"`
+	Changes   map[string]interface{} `json:"changes"` // Field name -> new value
+	Timestamp string                 `json:"timestamp"`
+}
+
+// SelectionUpdatedEvent represents a selection update
+type SelectionUpdatedEvent struct {
+	SelectionID string                 `json:"selection_id"`
+	MarketID    string                 `json:"market_id"`
+	EventID     string                 `json:"event_id"`
+	Version     int                    `json:"version"`
+	Changes     map[string]interface{} `json:"changes"` // Field name -> new value
+	Timestamp   string                 `json:"timestamp"`
 }
 
 // Helper functions for creating events
@@ -494,5 +521,38 @@ func NewBetFailedEvent(userID, eventID, marketID, selectionID string, amount flo
 		FailedReason: failedReason,
 		RequestData:  requestData,
 		Timestamp:    time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewEventUpdatedEvent creates a new event updated event
+func NewEventUpdatedEvent(eventID string, version int, changes map[string]interface{}) *EventUpdatedEvent {
+	return &EventUpdatedEvent{
+		EventID:   eventID,
+		Version:   version,
+		Changes:   changes,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewMarketUpdatedEvent creates a new market updated event
+func NewMarketUpdatedEvent(marketID, eventID string, version int, changes map[string]interface{}) *MarketUpdatedEvent {
+	return &MarketUpdatedEvent{
+		MarketID:  marketID,
+		EventID:   eventID,
+		Version:   version,
+		Changes:   changes,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewSelectionUpdatedEvent creates a new selection updated event
+func NewSelectionUpdatedEvent(selectionID, marketID, eventID string, version int, changes map[string]interface{}) *SelectionUpdatedEvent {
+	return &SelectionUpdatedEvent{
+		SelectionID: selectionID,
+		MarketID:    marketID,
+		EventID:     eventID,
+		Version:     version,
+		Changes:     changes,
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
 	}
 }

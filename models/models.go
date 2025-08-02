@@ -50,6 +50,7 @@ type Event struct {
 	EndTime     time.Time `json:"end_time" db:"end_time"`
 	Status      string    `json:"status" db:"status"` // "upcoming", "live", "finished", "cancelled"
 	Result      string    `json:"result" db:"result"` // "home_win", "away_win", "draw", "cancelled"
+	Version     int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -62,6 +63,7 @@ type Market struct {
 	Description string    `json:"description" db:"description"`
 	Type        string    `json:"type" db:"type"`     // "1x2", "over_under", "handicap", "exact_score"
 	Status      string    `json:"status" db:"status"` // "open", "suspended", "closed", "settled"
+	Version     int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -74,6 +76,7 @@ type Selection struct {
 	Odds      float64   `json:"odds" db:"odds"`
 	Status    string    `json:"status" db:"status"` // "active", "suspended", "won", "lost"
 	Result    string    `json:"result" db:"result"` // "won", "lost", "void", "pending"
+	Version   int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
