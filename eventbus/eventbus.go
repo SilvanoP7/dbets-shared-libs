@@ -404,6 +404,24 @@ type SelectionUpdatedEvent struct {
 	Timestamp   string                 `json:"timestamp"`
 }
 
+// OddsUpdatedEvent represents an update to odds
+type OddsUpdatedEvent struct {
+	OddsID      string                 `json:"odds_id"`
+	SelectionID string                 `json:"selection_id"`
+	Version     int                    `json:"version"`
+	Changes     map[string]interface{} `json:"changes"` // Field name -> new value
+	Timestamp   string                 `json:"timestamp"`
+}
+
+// ResultUpdatedEvent represents an update to a result
+type ResultUpdatedEvent struct {
+	ResultID    string                 `json:"result_id"`
+	SelectionID string                 `json:"selection_id"`
+	Version     int                    `json:"version"`
+	Changes     map[string]interface{} `json:"changes"` // Field name -> new value
+	Timestamp   string                 `json:"timestamp"`
+}
+
 // Helper functions for creating events
 
 // NewBetPlacedEvent creates a new bet placed event
@@ -551,6 +569,28 @@ func NewSelectionUpdatedEvent(selectionID, marketID, eventID string, version int
 		SelectionID: selectionID,
 		MarketID:    marketID,
 		EventID:     eventID,
+		Version:     version,
+		Changes:     changes,
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewOddsUpdatedEvent creates a new odds updated event
+func NewOddsUpdatedEvent(oddsID, selectionID string, version int, changes map[string]interface{}) *OddsUpdatedEvent {
+	return &OddsUpdatedEvent{
+		OddsID:      oddsID,
+		SelectionID: selectionID,
+		Version:     version,
+		Changes:     changes,
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewResultUpdatedEvent creates a new result updated event
+func NewResultUpdatedEvent(resultID, selectionID string, version int, changes map[string]interface{}) *ResultUpdatedEvent {
+	return &ResultUpdatedEvent{
+		ResultID:    resultID,
+		SelectionID: selectionID,
 		Version:     version,
 		Changes:     changes,
 		Timestamp:   time.Now().UTC().Format(time.RFC3339),

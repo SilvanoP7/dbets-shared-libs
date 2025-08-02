@@ -73,12 +73,30 @@ type Selection struct {
 	ID        uuid.UUID `json:"id" db:"id"`
 	MarketID  uuid.UUID `json:"market_id" db:"market_id"`
 	Name      string    `json:"name" db:"name"` // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
-	Odds      float64   `json:"odds" db:"odds"`
 	Status    string    `json:"status" db:"status"` // "active", "suspended", "won", "lost"
-	Result    string    `json:"result" db:"result"` // "won", "lost", "void", "pending"
 	Version   int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// Odds represents odds for a selection
+type Odds struct {
+	ID         uuid.UUID `json:"id" db:"id"`
+	SelectionID uuid.UUID `json:"selection_id" db:"selection_id"`
+	Odds       float64   `json:"odds" db:"odds"`
+	Version    int       `json:"version" db:"version"` // Version number for audit trail
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// Result represents a result for a selection
+type Result struct {
+	ID         uuid.UUID `json:"id" db:"id"`
+	SelectionID uuid.UUID `json:"selection_id" db:"selection_id"`
+	Result     string    `json:"result" db:"result"` // "won", "lost", "void", "pending"
+	Version    int       `json:"version" db:"version"` // Version number for audit trail
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // Bet represents a user's bet
