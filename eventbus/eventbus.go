@@ -34,14 +34,29 @@ type NATSEventBus struct {
 
 // NewNATSEventBus creates a new NATS event bus with JetStream
 func NewNATSEventBus(natsURL string) (*NATSEventBus, error) {
-	// Connect to NATS
-	nc, err := nats.Connect(natsURL)
+	// Connect to NATS with proper options for JetStream
+	opts := []nats.Option{
+		nats.Timeout(10 * time.Second),           // Connection timeout
+		nats.ReconnectWait(1 * time.Second),      // Reconnect wait time
+		nats.MaxReconnects(5),                    // Maximum reconnection attempts
+		nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
+			log.Printf("NATS disconnected: %v", err)
+		}),
+		nats.ReconnectHandler(func(nc *nats.Conn) {
+			log.Printf("NATS reconnected to %s", nc.ConnectedUrl())
+		}),
+		nats.ErrorHandler(func(nc *nats.Conn, sub *nats.Subscription, err error) {
+			log.Printf("NATS error: %v", err)
+		}),
+	}
+
+	nc, err := nats.Connect(natsURL, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to NATS: %w", err)
 	}
 
-	// Create JetStream context
-	js, err := nc.JetStream()
+	// Create JetStream context with timeout
+	js, err := nc.JetStream(nats.PublishAsyncMaxPending(256))
 	if err != nil {
 		nc.Close()
 		return nil, fmt.Errorf("failed to create JetStream context: %w", err)
@@ -83,12 +98,16 @@ func (n *NATSEventBus) Publish(topic string, event interface{}) error {
 	headers.Set("Event-Type", fmt.Sprintf("%T", event))
 	headers.Set("Timestamp", time.Now().UTC().Format(time.RFC3339))
 
-	// Publish to JetStream
+	// Create context with timeout for JetStream operations
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Publish to JetStream with timeout
 	ack, err := n.js.PublishMsg(&nats.Msg{
 		Subject: topic,
 		Data:    data,
 		Header:  headers,
-	})
+	}, nats.Context(ctx))
 	if err != nil {
 		return fmt.Errorf("failed to publish event: %w", err)
 	}
@@ -239,7 +258,11 @@ func (n *NATSEventBus) GetConsumerInfo(consumerName string) (*nats.ConsumerInfo,
 
 // CreateStream creates a new JetStream stream
 func (n *NATSEventBus) CreateStream(config *nats.StreamConfig) error {
-	stream, err := n.js.AddStream(config)
+	// Create context with timeout for stream operations
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	stream, err := n.js.AddStream(config, nats.Context(ctx))
 	if err != nil {
 		return fmt.Errorf("failed to create stream: %w", err)
 	}
