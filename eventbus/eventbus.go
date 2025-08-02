@@ -320,6 +320,31 @@ type UserUpdatedEvent struct {
 	Timestamp string `json:"timestamp"`
 }
 
+// BetFailedEvent represents a failed bet attempt
+type BetFailedEvent struct {
+	UserID       string                 `json:"user_id"`
+	EventID      string                 `json:"event_id"`
+	MarketID     string                 `json:"market_id"`
+	SelectionID  string                 `json:"selection_id"`
+	Amount       float64                `json:"amount"`
+	FailedReason string                 `json:"failed_reason"`
+	RequestData  map[string]interface{} `json:"request_data"`
+	Timestamp    string                 `json:"timestamp"`
+}
+
+// BetAttemptEvent represents any bet attempt (successful or failed)
+type BetAttemptEvent struct {
+	UserID       string                 `json:"user_id"`
+	EventID      string                 `json:"event_id"`
+	MarketID     string                 `json:"market_id"`
+	SelectionID  string                 `json:"selection_id"`
+	Amount       float64                `json:"amount"`
+	Success      bool                   `json:"success"`
+	FailedReason string                 `json:"failed_reason,omitempty"`
+	RequestData  map[string]interface{} `json:"request_data"`
+	Timestamp    string                 `json:"timestamp"`
+}
+
 // Helper functions for creating events
 
 // NewBetPlacedEvent creates a new bet placed event
@@ -423,5 +448,34 @@ func NewUserUpdatedEvent(userID, email string) *UserUpdatedEvent {
 		UserID:    userID,
 		Email:     email,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewBetFailedEvent creates a new bet failed event
+func NewBetFailedEvent(userID, eventID, marketID, selectionID string, amount float64, failedReason string, requestData map[string]interface{}) *BetFailedEvent {
+	return &BetFailedEvent{
+		UserID:       userID,
+		EventID:      eventID,
+		MarketID:     marketID,
+		SelectionID:  selectionID,
+		Amount:       amount,
+		FailedReason: failedReason,
+		RequestData:  requestData,
+		Timestamp:    time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// NewBetAttemptEvent creates a new bet attempt event
+func NewBetAttemptEvent(userID, eventID, marketID, selectionID string, amount float64, success bool, failedReason string, requestData map[string]interface{}) *BetAttemptEvent {
+	return &BetAttemptEvent{
+		UserID:       userID,
+		EventID:      eventID,
+		MarketID:     marketID,
+		SelectionID:  selectionID,
+		Amount:       amount,
+		Success:      success,
+		FailedReason: failedReason,
+		RequestData:  requestData,
+		Timestamp:    time.Now().UTC().Format(time.RFC3339),
 	}
 }
