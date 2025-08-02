@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"log"
 	"time"
 
@@ -121,7 +122,8 @@ func (n *NATSEventBus) Publish(topic string, event interface{}) error {
 // Subscribe subscribes to a topic and handles events with JetStream
 func (n *NATSEventBus) Subscribe(topic string, handler EventHandler) error {
 	// Create consumer for this subscription
-	consumerName := fmt.Sprintf("consumer-%s-%d", topic, time.Now().Unix())
+	safeTopic := strings.ReplaceAll(topic, ".", "_")
+	consumerName := fmt.Sprintf("consumer-%s", safeTopic)
 
 	// Subscribe with JetStream
 	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
@@ -155,7 +157,8 @@ func (n *NATSEventBus) Subscribe(topic string, handler EventHandler) error {
 
 // SubscribeWithFilter subscribes to a topic with filtering capabilities
 func (n *NATSEventBus) SubscribeWithFilter(topic string, filter func(msg *nats.Msg) bool, handler EventHandler) error {
-	consumerName := fmt.Sprintf("consumer-filtered-%s-%d", topic, time.Now().Unix())
+	safeTopic := strings.ReplaceAll(topic, ".", "_")
+	consumerName := fmt.Sprintf("consumer-filtered-%s", safeTopic)
 
 	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
 		// Apply filter
@@ -192,7 +195,8 @@ func (n *NATSEventBus) SubscribeWithFilter(topic string, filter func(msg *nats.M
 
 // ReplayEvents replays events from a specific time or sequence
 func (n *NATSEventBus) ReplayEvents(topic string, fromTime time.Time, handler EventHandler) error {
-	consumerName := fmt.Sprintf("replay-%s-%d", topic, time.Now().Unix())
+	safeTopic := strings.ReplaceAll(topic, ".", "_")
+	consumerName := fmt.Sprintf("replay-%s", safeTopic)
 
 	// Create consumer with start time
 	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
