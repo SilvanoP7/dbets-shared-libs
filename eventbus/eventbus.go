@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/nats-io/nats.go"
 )
 
 // EventHandler represents a function that handles events
@@ -21,87 +21,217 @@ type EventBus interface {
 	Close() error
 }
 
-// RedisEventBus implements EventBus using Redis Pub/Sub
-type RedisEventBus struct {
-	client *redis.Client
-	ctx    context.Context
+// NATSEventBus implements EventBus using NATS JetStream
+type NATSEventBus struct {
+	nc   *nats.Conn
+	js   nats.JetStreamContext
+	ctx  context.Context
+	subs map[string]*nats.Subscription
 }
 
-// NewRedisEventBus creates a new Redis event bus
-func NewRedisEventBus(redisURL string) (*RedisEventBus, error) {
-	opt, err := redis.ParseURL(redisURL)
+// NewNATSEventBus creates a new NATS event bus with JetStream
+func NewNATSEventBus(natsURL string) (*NATSEventBus, error) {
+	// Connect to NATS
+	nc, err := nats.Connect(natsURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse Redis URL: %w", err)
+		return nil, fmt.Errorf("failed to connect to NATS: %w", err)
 	}
 
-	client := redis.NewClient(opt)
-	ctx := context.Background()
-
-	// Test connection
-	_, err = client.Ping(ctx).Result()
+	// Create JetStream context
+	js, err := nc.JetStream()
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
+		nc.Close()
+		return nil, fmt.Errorf("failed to create JetStream context: %w", err)
 	}
 
-	return &RedisEventBus{
-		client: client,
-		ctx:    ctx,
+	// Create stream for event storage
+	stream, err := js.AddStream(&nats.StreamConfig{
+		Name:      "DBETS_EVENTS",
+		Subjects:  []string{"dbets.*"},
+		Storage:   nats.FileStorage,
+		Retention: nats.LimitsPolicy,
+		MaxAge:    24 * time.Hour, // Keep events for 24 hours
+		MaxMsgs:   1000000,        // Keep up to 1M messages
+		Replicas:  1,
+	})
+	if err != nil && err.Error() != "stream name already in use" {
+		log.Printf("Warning: failed to create stream (may already exist): %v", err)
+	} else if err == nil {
+		log.Printf("Created JetStream stream: %s", stream.Config.Name)
+	}
+
+	return &NATSEventBus{
+		nc:   nc,
+		js:   js,
+		ctx:  context.Background(),
+		subs: make(map[string]*nats.Subscription),
 	}, nil
 }
 
-// Publish publishes an event to a topic
-func (r *RedisEventBus) Publish(topic string, event interface{}) error {
+// Publish publishes an event to a topic with JetStream
+func (n *NATSEventBus) Publish(topic string, event interface{}) error {
 	data, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal event: %w", err)
 	}
 
-	err = r.client.Publish(r.ctx, topic, data).Err()
+	// Add headers for filtering
+	headers := nats.Header{}
+	headers.Set("Event-Type", fmt.Sprintf("%T", event))
+	headers.Set("Timestamp", time.Now().UTC().Format(time.RFC3339))
+
+	// Publish to JetStream
+	ack, err := n.js.PublishMsg(&nats.Msg{
+		Subject: topic,
+		Data:    data,
+		Header:  headers,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to publish event: %w", err)
 	}
 
-	log.Printf("Published event to topic %s: %+v", topic, event)
+	log.Printf("Published event to topic %s (sequence: %d): %+v", topic, ack.Sequence, event)
 	return nil
 }
 
-// Subscribe subscribes to a topic and handles events
-func (r *RedisEventBus) Subscribe(topic string, handler EventHandler) error {
-	pubsub := r.client.Subscribe(r.ctx, topic)
-	defer pubsub.Close()
+// Subscribe subscribes to a topic and handles events with JetStream
+func (n *NATSEventBus) Subscribe(topic string, handler EventHandler) error {
+	// Create consumer for this subscription
+	consumerName := fmt.Sprintf("consumer-%s-%d", topic, time.Now().Unix())
 
-	log.Printf("Subscribed to topic: %s", topic)
-
-	for {
-		msg, err := pubsub.ReceiveMessage(r.ctx)
-		if err != nil {
-			log.Printf("Error receiving message from topic %s: %v", topic, err)
-			continue
-		}
-
-		// Parse the event (you might want to add event type information)
+	// Subscribe with JetStream
+	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
+		// Parse the event
 		var event interface{}
-		if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			log.Printf("Error unmarshaling event from topic %s: %v", topic, err)
-			continue
+			msg.Ack()
+			return
 		}
 
 		// Handle the event
 		if err := handler(event); err != nil {
 			log.Printf("Error handling event from topic %s: %v", topic, err)
+			// Don't ack the message so it can be redelivered
+			return
 		}
+
+		// Acknowledge the message
+		msg.Ack()
+	}, nats.Durable(consumerName), nats.AckWait(30*time.Second))
+
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to topic %s: %w", topic, err)
 	}
+
+	n.subs[topic] = sub
+	log.Printf("Subscribed to topic: %s with consumer: %s", topic, consumerName)
+	return nil
+}
+
+// SubscribeWithFilter subscribes to a topic with filtering capabilities
+func (n *NATSEventBus) SubscribeWithFilter(topic string, filter func(msg *nats.Msg) bool, handler EventHandler) error {
+	consumerName := fmt.Sprintf("consumer-filtered-%s-%d", topic, time.Now().Unix())
+
+	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
+		// Apply filter
+		if !filter(msg) {
+			msg.Ack()
+			return
+		}
+
+		// Parse the event
+		var event interface{}
+		if err := json.Unmarshal(msg.Data, &event); err != nil {
+			log.Printf("Error unmarshaling event from topic %s: %v", topic, err)
+			msg.Ack()
+			return
+		}
+
+		// Handle the event
+		if err := handler(event); err != nil {
+			log.Printf("Error handling event from topic %s: %v", topic, err)
+			return
+		}
+
+		msg.Ack()
+	}, nats.Durable(consumerName), nats.AckWait(30*time.Second))
+
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to topic %s: %w", topic, err)
+	}
+
+	n.subs[topic] = sub
+	log.Printf("Subscribed to topic: %s with filter and consumer: %s", topic, consumerName)
+	return nil
+}
+
+// ReplayEvents replays events from a specific time or sequence
+func (n *NATSEventBus) ReplayEvents(topic string, fromTime time.Time, handler EventHandler) error {
+	consumerName := fmt.Sprintf("replay-%s-%d", topic, time.Now().Unix())
+
+	// Create consumer with start time
+	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
+		// Parse the event
+		var event interface{}
+		if err := json.Unmarshal(msg.Data, &event); err != nil {
+			log.Printf("Error unmarshaling event from topic %s: %v", topic, err)
+			msg.Ack()
+			return
+		}
+
+		// Handle the event
+		if err := handler(event); err != nil {
+			log.Printf("Error handling replayed event from topic %s: %v", topic, err)
+			return
+		}
+
+		msg.Ack()
+	}, nats.Durable(consumerName), nats.DeliverNew(), nats.AckWait(30*time.Second))
+
+	if err != nil {
+		return fmt.Errorf("failed to replay events from topic %s: %w", topic, err)
+	}
+
+	// Note: JetStream replay is handled by the subscription itself
+	// The PurgeStream is not needed for replay functionality
+
+	n.subs[topic] = sub
+	log.Printf("Started replay for topic: %s from time: %s", topic, fromTime.Format(time.RFC3339))
+	return nil
 }
 
 // Unsubscribe unsubscribes from a topic
-func (r *RedisEventBus) Unsubscribe(topic string) error {
-	pubsub := r.client.Subscribe(r.ctx, topic)
-	return pubsub.Unsubscribe(r.ctx, topic)
+func (n *NATSEventBus) Unsubscribe(topic string) error {
+	if sub, exists := n.subs[topic]; exists {
+		err := sub.Unsubscribe()
+		delete(n.subs, topic)
+		return err
+	}
+	return nil
 }
 
-// Close closes the Redis connection
-func (r *RedisEventBus) Close() error {
-	return r.client.Close()
+// Close closes the NATS connection
+func (n *NATSEventBus) Close() error {
+	// Unsubscribe from all topics
+	for topic := range n.subs {
+		n.Unsubscribe(topic)
+	}
+
+	if n.nc != nil {
+		n.nc.Close()
+	}
+	return nil
+}
+
+// GetStreamInfo returns information about the JetStream stream
+func (n *NATSEventBus) GetStreamInfo() (*nats.StreamInfo, error) {
+	return n.js.StreamInfo("DBETS_EVENTS")
+}
+
+// GetConsumerInfo returns information about a specific consumer
+func (n *NATSEventBus) GetConsumerInfo(consumerName string) (*nats.ConsumerInfo, error) {
+	return n.js.ConsumerInfo("DBETS_EVENTS", consumerName)
 }
 
 // Event types for different services

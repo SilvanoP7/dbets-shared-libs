@@ -1,0 +1,46 @@
+eventbus:
+  # NATS Configuration
+  nats:
+    url: "nats://localhost:4222"
+    # JetStream Configuration
+    jetstream:
+      stream_name: "DBETS_EVENTS"
+      subjects: ["dbets.*"]
+      storage: "file"
+      retention: "limits"
+      max_age: "24h"
+      max_msgs: 1000000
+      replicas: 1
+    
+    # Consumer Configuration
+    consumer:
+      ack_wait: "30s"
+      max_deliver: 10
+      filter_durable: true
+  
+  # Event Configuration
+  events:
+    # Event retention settings
+    retention:
+      bet_events: "7d"
+      user_events: "30d"
+      wallet_events: "90d"
+      system_events: "1d"
+    
+    # Event filtering
+    filters:
+      enabled: true
+      include_headers: ["Event-Type", "User-ID", "Timestamp"]
+    
+    # Replay settings
+    replay:
+      enabled: true
+      max_replay_duration: "1h"
+      batch_size: 100
+  
+  # Logging Configuration
+  logging:
+    level: "info"
+    format: "json"
+    include_sequence: true
+    include_timestamp: true 
