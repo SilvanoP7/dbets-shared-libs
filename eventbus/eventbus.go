@@ -332,19 +332,6 @@ type BetFailedEvent struct {
 	Timestamp    string                 `json:"timestamp"`
 }
 
-// BetAttemptEvent represents any bet attempt (successful or failed)
-type BetAttemptEvent struct {
-	UserID       string                 `json:"user_id"`
-	EventID      string                 `json:"event_id"`
-	MarketID     string                 `json:"market_id"`
-	SelectionID  string                 `json:"selection_id"`
-	Amount       float64                `json:"amount"`
-	Success      bool                   `json:"success"`
-	FailedReason string                 `json:"failed_reason,omitempty"`
-	RequestData  map[string]interface{} `json:"request_data"`
-	Timestamp    string                 `json:"timestamp"`
-}
-
 // Helper functions for creating events
 
 // NewBetPlacedEvent creates a new bet placed event
@@ -459,21 +446,6 @@ func NewBetFailedEvent(userID, eventID, marketID, selectionID string, amount flo
 		MarketID:     marketID,
 		SelectionID:  selectionID,
 		Amount:       amount,
-		FailedReason: failedReason,
-		RequestData:  requestData,
-		Timestamp:    time.Now().UTC().Format(time.RFC3339),
-	}
-}
-
-// NewBetAttemptEvent creates a new bet attempt event
-func NewBetAttemptEvent(userID, eventID, marketID, selectionID string, amount float64, success bool, failedReason string, requestData map[string]interface{}) *BetAttemptEvent {
-	return &BetAttemptEvent{
-		UserID:       userID,
-		EventID:      eventID,
-		MarketID:     marketID,
-		SelectionID:  selectionID,
-		Amount:       amount,
-		Success:      success,
 		FailedReason: failedReason,
 		RequestData:  requestData,
 		Timestamp:    time.Now().UTC().Format(time.RFC3339),
