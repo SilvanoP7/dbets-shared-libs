@@ -276,12 +276,19 @@ func (n *NATSEventBus) CreateStream(config *nats.StreamConfig) error {
 
 // BetPlacedEvent represents a bet placement event
 type BetPlacedEvent struct {
-	BetID     string  `json:"bet_id"`
-	UserID    string  `json:"user_id"`
-	EventID   string  `json:"event_id"`
-	Amount    float64 `json:"amount"`
-	Odds      float64 `json:"odds"`
-	Timestamp string  `json:"timestamp"`
+	BetID       string                 `json:"bet_id"`
+	UserID      string                 `json:"user_id"`
+	Amount      float64                `json:"amount"`
+	Odds        float64                `json:"odds"`
+	Selections  []BetSelection         `json:"selections"`
+	Timestamp   string                 `json:"timestamp"`
+}
+
+type BetSelection struct {
+	EventID     string  `json:"event_id"`
+	MarketID    string  `json:"market_id"`
+	SelectionID string  `json:"selection_id"`
+	Odds        float64 `json:"odds"`
 }
 
 // BetSettledEvent represents a bet settlement event
@@ -373,14 +380,14 @@ type BetFailedEvent struct {
 // Helper functions for creating events
 
 // NewBetPlacedEvent creates a new bet placed event
-func NewBetPlacedEvent(betID, userID, eventID string, amount, odds float64) *BetPlacedEvent {
+func NewBetPlacedEvent(betID, userID string, amount, odds float64, selections []BetSelection) *BetPlacedEvent {
 	return &BetPlacedEvent{
-		BetID:     betID,
-		UserID:    userID,
-		EventID:   eventID,
-		Amount:    amount,
-		Odds:      odds,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		BetID:      betID,
+		UserID:     userID,
+		Amount:     amount,
+		Odds:       odds,
+		Selections: selections,
+		Timestamp:  time.Now().UTC().Format(time.RFC3339),
 	}
 }
 
