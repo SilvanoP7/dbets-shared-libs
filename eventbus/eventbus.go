@@ -34,6 +34,8 @@ type NATSEventBus struct {
 
 // NewNATSEventBus creates a new NATS event bus with JetStream
 func NewNATSEventBus(natsURL string) (*NATSEventBus, error) {
+	log.Printf("Attempting to connect to NATS at: %s", natsURL)
+
 	// Connect to NATS with proper options for JetStream
 	opts := []nats.Option{
 		nats.Timeout(10 * time.Second),      // Connection timeout
@@ -55,12 +57,16 @@ func NewNATSEventBus(natsURL string) (*NATSEventBus, error) {
 		return nil, fmt.Errorf("failed to connect to NATS: %w", err)
 	}
 
+	log.Printf("Successfully connected to NATS at: %s", nc.ConnectedUrl())
+
 	// Create JetStream context with timeout
 	js, err := nc.JetStream(nats.PublishAsyncMaxPending(256))
 	if err != nil {
 		nc.Close()
 		return nil, fmt.Errorf("failed to create JetStream context: %w", err)
 	}
+
+	log.Printf("Successfully created JetStream context")
 
 	// Don't create streams automatically - let each service create its own streams
 	log.Printf("Connected to NATS JetStream at %s", natsURL)
@@ -75,10 +81,14 @@ func NewNATSEventBus(natsURL string) (*NATSEventBus, error) {
 
 // Publish publishes an event to a topic with JetStream
 func (n *NATSEventBus) Publish(topic string, event interface{}) error {
+	log.Printf("Attempting to publish event to topic: %s", topic)
+
 	data, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal event: %w", err)
 	}
+
+	log.Printf("Event data marshaled successfully, size: %d bytes", len(data))
 
 	// Add headers for filtering
 	headers := nats.Header{}
@@ -89,6 +99,8 @@ func (n *NATSEventBus) Publish(topic string, event interface{}) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	log.Printf("Publishing message to JetStream with timeout...")
+
 	// Publish to JetStream with timeout
 	ack, err := n.js.PublishMsg(&nats.Msg{
 		Subject: topic,
@@ -96,10 +108,11 @@ func (n *NATSEventBus) Publish(topic string, event interface{}) error {
 		Header:  headers,
 	}, nats.Context(ctx))
 	if err != nil {
+		log.Printf("Failed to publish to JetStream: %v", err)
 		return fmt.Errorf("failed to publish event: %w", err)
 	}
 
-	log.Printf("Published event to topic %s (sequence: %d): %+v", topic, ack.Sequence, event)
+	log.Printf("Successfully published event to topic %s (sequence: %d): %+v", topic, ack.Sequence, event)
 	return nil
 }
 
