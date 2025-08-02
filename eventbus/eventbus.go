@@ -21,6 +21,7 @@ type EventBus interface {
 	Close() error
 	GetStreamInfo(streamName string) (*nats.StreamInfo, error)
 	GetConsumerInfo(consumerName string) (*nats.ConsumerInfo, error)
+	CreateStream(config *nats.StreamConfig) error
 }
 
 // NATSEventBus implements EventBus using NATS JetStream
@@ -234,6 +235,16 @@ func (n *NATSEventBus) GetStreamInfo(streamName string) (*nats.StreamInfo, error
 // GetConsumerInfo returns information about a specific consumer
 func (n *NATSEventBus) GetConsumerInfo(consumerName string) (*nats.ConsumerInfo, error) {
 	return n.js.ConsumerInfo("DBETS_EVENTS", consumerName)
+}
+
+// CreateStream creates a new JetStream stream
+func (n *NATSEventBus) CreateStream(config *nats.StreamConfig) error {
+	stream, err := n.js.AddStream(config)
+	if err != nil {
+		return fmt.Errorf("failed to create stream: %w", err)
+	}
+	log.Printf("Created JetStream stream: %s", stream.Config.Name)
+	return nil
 }
 
 // Event types for different services
