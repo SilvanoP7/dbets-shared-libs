@@ -36,9 +36,9 @@ type NATSEventBus struct {
 func NewNATSEventBus(natsURL string) (*NATSEventBus, error) {
 	// Connect to NATS with proper options for JetStream
 	opts := []nats.Option{
-		nats.Timeout(10 * time.Second),           // Connection timeout
-		nats.ReconnectWait(1 * time.Second),      // Reconnect wait time
-		nats.MaxReconnects(5),                    // Maximum reconnection attempts
+		nats.Timeout(10 * time.Second),      // Connection timeout
+		nats.ReconnectWait(1 * time.Second), // Reconnect wait time
+		nats.MaxReconnects(5),               // Maximum reconnection attempts
 		nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
 			log.Printf("NATS disconnected: %v", err)
 		}),
@@ -62,21 +62,8 @@ func NewNATSEventBus(natsURL string) (*NATSEventBus, error) {
 		return nil, fmt.Errorf("failed to create JetStream context: %w", err)
 	}
 
-	// Create stream for event storage
-	stream, err := js.AddStream(&nats.StreamConfig{
-		Name:      "DBETS_EVENTS",
-		Subjects:  []string{"dbets.*"},
-		Storage:   nats.FileStorage,
-		Retention: nats.LimitsPolicy,
-		MaxAge:    24 * time.Hour, // Keep events for 24 hours
-		MaxMsgs:   1000000,        // Keep up to 1M messages
-		Replicas:  1,
-	})
-	if err != nil && err.Error() != "stream name already in use" {
-		log.Printf("Warning: failed to create stream (may already exist): %v", err)
-	} else if err == nil {
-		log.Printf("Created JetStream stream: %s", stream.Config.Name)
-	}
+	// Don't create streams automatically - let each service create its own streams
+	log.Printf("Connected to NATS JetStream at %s", natsURL)
 
 	return &NATSEventBus{
 		nc:   nc,
