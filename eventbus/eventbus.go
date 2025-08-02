@@ -35,7 +35,7 @@ type NATSEventBus struct {
 // NewNATSEventBus creates a new NATS event bus with JetStream
 func NewNATSEventBus(natsURL string) (*NATSEventBus, error) {
 	log.Printf("Attempting to connect to NATS at: %s", natsURL)
-	
+
 	// Connect to NATS with proper options for JetStream
 	opts := []nats.Option{
 		nats.Timeout(10 * time.Second),      // Connection timeout
