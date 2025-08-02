@@ -310,12 +310,7 @@ type CashoutRequestEvent struct {
 }
 
 // OddsUpdatedEvent represents an odds update event
-type OddsUpdatedEvent struct {
-	SelectionID string  `json:"selection_id"`
-	OldOdds     float64 `json:"old_odds"`
-	NewOdds     float64 `json:"new_odds"`
-	Timestamp   string  `json:"timestamp"`
-}
+
 
 // EventResultEvent represents an event result event
 type EventResultEvent struct {
@@ -458,15 +453,7 @@ func NewCashoutRequestEvent(betID, userID string, cashoutValue float64) *Cashout
 	}
 }
 
-// NewOddsUpdatedEvent creates a new odds updated event
-func NewOddsUpdatedEvent(selectionID string, oldOdds, newOdds float64) *OddsUpdatedEvent {
-	return &OddsUpdatedEvent{
-		SelectionID: selectionID,
-		OldOdds:     oldOdds,
-		NewOdds:     newOdds,
-		Timestamp:   time.Now().UTC().Format(time.RFC3339),
-	}
-}
+
 
 // NewEventResultEvent creates a new event result event
 func NewEventResultEvent(eventID, result string) *EventResultEvent {
