@@ -19,6 +19,8 @@ type EventBus interface {
 	Subscribe(topic string, handler EventHandler) error
 	Unsubscribe(topic string) error
 	Close() error
+	GetStreamInfo(streamName string) (*nats.StreamInfo, error)
+	GetConsumerInfo(consumerName string) (*nats.ConsumerInfo, error)
 }
 
 // NATSEventBus implements EventBus using NATS JetStream
@@ -225,8 +227,8 @@ func (n *NATSEventBus) Close() error {
 }
 
 // GetStreamInfo returns information about the JetStream stream
-func (n *NATSEventBus) GetStreamInfo() (*nats.StreamInfo, error) {
-	return n.js.StreamInfo("DBETS_EVENTS")
+func (n *NATSEventBus) GetStreamInfo(streamName string) (*nats.StreamInfo, error) {
+	return n.js.StreamInfo(streamName)
 }
 
 // GetConsumerInfo returns information about a specific consumer
