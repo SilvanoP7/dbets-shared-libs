@@ -185,11 +185,12 @@ type RegisterRequest struct {
 
 // PlaceBetRequest represents a bet placement request
 type PlaceBetRequest struct {
-	EventID     uuid.UUID `json:"event_id" binding:"required"`
-	MarketID    uuid.UUID `json:"market_id" binding:"required"`
-	SelectionID uuid.UUID `json:"selection_id" binding:"required"`
-	Amount      float64   `json:"amount" binding:"required,gt=0"`
-	ExpectedOdds float64  `json:"expected_odds" binding:"required,gt=0"` // Odds from UI for price validation
+	EventID           uuid.UUID `json:"event_id" binding:"required"`
+	MarketID          uuid.UUID `json:"market_id" binding:"required"`
+	SelectionID       uuid.UUID `json:"selection_id" binding:"required"`
+	Amount            float64   `json:"amount" binding:"required,gt=0"`
+	ExpectedOdds      float64   `json:"expected_odds" binding:"required,gt=0"` // Odds from UI for price validation
+	AcceptPriceChanges bool      `json:"accept_price_changes"`                   // Allow user to accept price changes
 }
 
 // PlaceAccumulatorBetRequest represents a request to place an accumulator bet
