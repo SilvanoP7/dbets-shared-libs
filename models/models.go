@@ -48,8 +48,8 @@ type Event struct {
 	AwayTeam    string    `json:"away_team" db:"away_team"`
 	StartTime   time.Time `json:"start_time" db:"start_time"`
 	EndTime     time.Time `json:"end_time" db:"end_time"`
-	Status      string    `json:"status" db:"status"` // "upcoming", "live", "finished", "cancelled"
-	Result      string    `json:"result" db:"result"` // "home_win", "away_win", "draw", "cancelled"
+	Status      string    `json:"status" db:"status"`   // "upcoming", "live", "finished", "cancelled"
+	Result      string    `json:"result" db:"result"`   // "home_win", "away_win", "draw", "cancelled"
 	Version     int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
@@ -61,8 +61,8 @@ type Market struct {
 	EventID     uuid.UUID `json:"event_id" db:"event_id"`
 	Name        string    `json:"name" db:"name"` // "match_winner", "total_goals", "first_scorer", etc.
 	Description string    `json:"description" db:"description"`
-	Type        string    `json:"type" db:"type"`     // "1x2", "over_under", "handicap", "exact_score"
-	Status      string    `json:"status" db:"status"` // "open", "suspended", "closed", "settled"
+	Type        string    `json:"type" db:"type"`       // "1x2", "over_under", "handicap", "exact_score"
+	Status      string    `json:"status" db:"status"`   // "open", "suspended", "closed", "settled"
 	Version     int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
@@ -72,8 +72,8 @@ type Market struct {
 type Selection struct {
 	ID        uuid.UUID `json:"id" db:"id"`
 	MarketID  uuid.UUID `json:"market_id" db:"market_id"`
-	Name      string    `json:"name" db:"name"` // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
-	Status    string    `json:"status" db:"status"` // "active", "suspended", "won", "lost"
+	Name      string    `json:"name" db:"name"`       // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
+	Status    string    `json:"status" db:"status"`   // "active", "suspended", "won", "lost"
 	Version   int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
@@ -81,22 +81,22 @@ type Selection struct {
 
 // Odds represents odds for a selection
 type Odds struct {
-	ID         uuid.UUID `json:"id" db:"id"`
+	ID          uuid.UUID `json:"id" db:"id"`
 	SelectionID uuid.UUID `json:"selection_id" db:"selection_id"`
-	Odds       float64   `json:"odds" db:"odds"`
-	Version    int       `json:"version" db:"version"` // Version number for audit trail
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+	Odds        float64   `json:"odds" db:"odds"`
+	Version     int       `json:"version" db:"version"` // Version number for audit trail
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // Result represents a result for a selection
 type Result struct {
-	ID         uuid.UUID `json:"id" db:"id"`
+	ID          uuid.UUID `json:"id" db:"id"`
 	SelectionID uuid.UUID `json:"selection_id" db:"selection_id"`
-	Result     string    `json:"result" db:"result"` // "won", "lost", "void", "pending"
-	Version    int       `json:"version" db:"version"` // Version number for audit trail
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+	Result      string    `json:"result" db:"result"`   // "won", "lost", "void", "pending"
+	Version     int       `json:"version" db:"version"` // Version number for audit trail
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // Bet represents a user's bet
@@ -106,8 +106,10 @@ type Bet struct {
 	BetType      string    `json:"bet_type" db:"bet_type"` // "single", "double", "treble", "accumulator"
 	Amount       float64   `json:"amount" db:"amount"`
 	TotalOdds    float64   `json:"total_odds" db:"total_odds"`
-	Status       string    `json:"status" db:"status"` // "pending", "won", "lost", "void", "cancelled"
+	Status       string    `json:"status" db:"status"` // "pending", "won", "lost", "void", "cancelled", "unsettle"
 	PotentialWin float64   `json:"potential_win" db:"potential_win"`
+	ActualWin    *float64  `json:"actual_win" db:"actual_win"` // Actual amount won (NULL if not settled yet)
+	SettledAt    *time.Time `json:"settled_at" db:"settled_at"` // Timestamp when the bet was settled (NULL if not settled yet)
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -120,6 +122,7 @@ type BetSelection struct {
 	MarketID    uuid.UUID `json:"market_id" db:"market_id"`
 	SelectionID uuid.UUID `json:"selection_id" db:"selection_id"`
 	Odds        float64   `json:"odds" db:"odds"`
+	Result      *string   `json:"result" db:"result"` // Result of the selection: WIN, LOSE, or VOID
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
@@ -185,12 +188,12 @@ type RegisterRequest struct {
 
 // PlaceBetRequest represents a bet placement request
 type PlaceBetRequest struct {
-	EventID           uuid.UUID `json:"event_id" binding:"required"`
-	MarketID          uuid.UUID `json:"market_id" binding:"required"`
-	SelectionID       uuid.UUID `json:"selection_id" binding:"required"`
-	Amount            float64   `json:"amount" binding:"required,gt=0"`
-	ExpectedOdds      float64   `json:"expected_odds" binding:"required,gt=0"` // Odds from UI for price validation
-	AcceptPriceChanges bool      `json:"accept_price_changes"`                   // Allow user to accept price changes
+	EventID            uuid.UUID `json:"event_id" binding:"required"`
+	MarketID           uuid.UUID `json:"market_id" binding:"required"`
+	SelectionID        uuid.UUID `json:"selection_id" binding:"required"`
+	Amount             float64   `json:"amount" binding:"required,gt=0"`
+	ExpectedOdds       float64   `json:"expected_odds" binding:"required,gt=0"` // Odds from UI for price validation
+	AcceptPriceChanges bool      `json:"accept_price_changes"`                  // Allow user to accept price changes
 }
 
 // PlaceAccumulatorBetRequest represents a request to place an accumulator bet
