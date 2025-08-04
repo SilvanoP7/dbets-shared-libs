@@ -39,21 +39,25 @@ type Sport struct {
 
 // Event represents a sports event
 type Event struct {
-	ID          uuid.UUID `json:"id" db:"id"`
-	SportID     uuid.UUID `json:"sport_id" db:"sport_id"`
-	Title       string    `json:"title" db:"title"`
-	Description string    `json:"description" db:"description"`
-	Country     string    `json:"country" db:"country"` // Country where the event takes place
-	League      string    `json:"league" db:"league"`   // League or competition name
-	HomeTeam    string    `json:"home_team" db:"home_team"`
-	AwayTeam    string    `json:"away_team" db:"away_team"`
-	StartTime   time.Time `json:"start_time" db:"start_time"`
-	EndTime     time.Time `json:"end_time" db:"end_time"`
-	Status      string    `json:"status" db:"status"`   // "upcoming", "live", "finished", "cancelled"
-	Result      string    `json:"result" db:"result"`   // "home_win", "away_win", "draw", "cancelled"
-	Version     int       `json:"version" db:"version"` // Version number for audit trail (managed internally)
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	SportID     uuid.UUID `json:"sport_id" gorm:"type:uuid;not null"`
+	Title       string    `json:"title" gorm:"not null"`
+	Description string    `json:"description"`
+	Country     string    `json:"country" gorm:"not null"`
+	League      string    `json:"league" gorm:"not null"`
+	HomeTeam    string    `json:"home_team" gorm:"not null"`
+	AwayTeam    string    `json:"away_team" gorm:"not null"`
+	StartTime   time.Time `json:"start_time" gorm:"not null"`
+	EndTime     time.Time `json:"end_time" gorm:"not null"`
+	Status      string    `json:"status" gorm:"not null;default:'upcoming'"`
+	Result      string    `json:"result"`
+	Version     int       `json:"version" gorm:"not null;default:1"`
+	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	// GORM relationships
+	Sport   Sport    `json:"sport,omitempty" gorm:"foreignKey:SportID"`
+	Markets []Market `json:"markets,omitempty" gorm:"foreignKey:EventID"`
 }
 
 // CreateEventRequest represents a request to create a new event (without version)
