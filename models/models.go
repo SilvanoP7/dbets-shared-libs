@@ -56,7 +56,6 @@ type Event struct {
 	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	// GORM relationships
-	Sport   Sport    `json:"sport,omitempty" gorm:"foreignKey:SportID"`
 	Markets []Market `json:"markets,omitempty" gorm:"foreignKey:EventID"`
 }
 
@@ -102,9 +101,8 @@ type Market struct {
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
-	// GORM relationships
-	Event Event `json:"event,omitempty" gorm:"foreignKey:EventID"`
-	// Note: Selections relationship removed to avoid circular reference
+	// Manual selections field for API responses
+	Selections []Selection `json:"selections,omitempty" gorm:"-"`
 }
 
 // CreateMarketRequest represents a request to create a new market (without version)
@@ -134,8 +132,8 @@ type Selection struct {
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
-	// GORM relationships
-	Market Market `json:"market,omitempty" gorm:"foreignKey:MarketID"`
+	// Manual odds field for API responses
+	Odds *Odds `json:"odds,omitempty" gorm:"-"`
 }
 
 // CreateSelectionRequest represents a request to create a new selection (without version)
