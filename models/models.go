@@ -50,9 +50,39 @@ type Event struct {
 	EndTime     time.Time `json:"end_time" db:"end_time"`
 	Status      string    `json:"status" db:"status"`   // "upcoming", "live", "finished", "cancelled"
 	Result      string    `json:"result" db:"result"`   // "home_win", "away_win", "draw", "cancelled"
-	Version     int       `json:"version" db:"version"` // Version number for audit trail
+	Version     int       `json:"version" db:"version"` // Version number for audit trail (managed internally)
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// CreateEventRequest represents a request to create a new event (without version)
+type CreateEventRequest struct {
+	SportID     uuid.UUID `json:"sport_id" binding:"required"`
+	Title       string    `json:"title" binding:"required"`
+	Description string    `json:"description"`
+	Country     string    `json:"country" binding:"required"`
+	League      string    `json:"league" binding:"required"`
+	HomeTeam    string    `json:"home_team" binding:"required"`
+	AwayTeam    string    `json:"away_team" binding:"required"`
+	StartTime   time.Time `json:"start_time" binding:"required"`
+	EndTime     time.Time `json:"end_time" binding:"required"`
+	Status      string    `json:"status" binding:"required"` // "upcoming", "live", "finished", "cancelled"
+	Result      string    `json:"result"`                    // "home_win", "away_win", "draw", "cancelled"
+}
+
+// UpdateEventRequest represents a request to update an event (without version)
+type UpdateEventRequest struct {
+	SportID     uuid.UUID `json:"sport_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Country     string    `json:"country"`
+	League      string    `json:"league"`
+	HomeTeam    string    `json:"home_team"`
+	AwayTeam    string    `json:"away_team"`
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
+	Status      string    `json:"status"` // "upcoming", "live", "finished", "cancelled"
+	Result      string    `json:"result"` // "home_win", "away_win", "draw", "cancelled"
 }
 
 // Market represents a betting market for an event
@@ -68,6 +98,23 @@ type Market struct {
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
+// CreateMarketRequest represents a request to create a new market (without version)
+type CreateMarketRequest struct {
+	EventID     uuid.UUID `json:"event_id" binding:"required"`
+	Name        string    `json:"name" binding:"required"` // "match_winner", "total_goals", "first_scorer", etc.
+	Description string    `json:"description"`
+	Type        string    `json:"type" binding:"required"` // "1x2", "over_under", "handicap", "exact_score"
+	Status      string    `json:"status" binding:"required"` // "open", "suspended", "closed", "settled"
+}
+
+// UpdateMarketRequest represents a request to update a market (without version)
+type UpdateMarketRequest struct {
+	Name        string `json:"name"` // "match_winner", "total_goals", "first_scorer", etc.
+	Description string `json:"description"`
+	Type        string `json:"type"` // "1x2", "over_under", "handicap", "exact_score"
+	Status      string `json:"status"` // "open", "suspended", "closed", "settled"
+}
+
 // Selection represents a betting option within a market
 type Selection struct {
 	ID        uuid.UUID `json:"id" db:"id"`
@@ -77,6 +124,19 @@ type Selection struct {
 	Version   int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// CreateSelectionRequest represents a request to create a new selection (without version)
+type CreateSelectionRequest struct {
+	MarketID uuid.UUID `json:"market_id" binding:"required"`
+	Name     string    `json:"name" binding:"required"` // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
+	Status   string    `json:"status" binding:"required"` // "active", "suspended", "won", "lost"
+}
+
+// UpdateSelectionRequest represents a request to update a selection (without version)
+type UpdateSelectionRequest struct {
+	Name   string `json:"name"` // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
+	Status string `json:"status"` // "active", "suspended", "won", "lost"
 }
 
 // Odds represents odds for a selection
@@ -89,6 +149,17 @@ type Odds struct {
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
+// CreateOddsRequest represents a request to create odds (without version)
+type CreateOddsRequest struct {
+	SelectionID uuid.UUID `json:"selection_id" binding:"required"`
+	Odds        float64   `json:"odds" binding:"required,gt=0"`
+}
+
+// UpdateOddsRequest represents a request to update odds (without version)
+type UpdateOddsRequest struct {
+	Odds float64 `json:"odds" binding:"required,gt=0"`
+}
+
 // Result represents a result for a selection
 type Result struct {
 	ID          uuid.UUID `json:"id" db:"id"`
@@ -97,6 +168,17 @@ type Result struct {
 	Version     int       `json:"version" db:"version"` // Version number for audit trail
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// CreateResultRequest represents a request to create a result (without version)
+type CreateResultRequest struct {
+	SelectionID uuid.UUID `json:"selection_id" binding:"required"`
+	Result      string    `json:"result" binding:"required"` // "won", "lost", "void", "pending"
+}
+
+// UpdateResultRequest represents a request to update a result (without version)
+type UpdateResultRequest struct {
+	Result string `json:"result" binding:"required"` // "won", "lost", "void", "pending"
 }
 
 // Bet represents a user's bet
