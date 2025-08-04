@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -127,38 +127,6 @@ func (n *NATSEventBus) Subscribe(topic string, handler EventHandler) error {
 	consumerName := fmt.Sprintf("consumer-%s", safeTopic)
 
 	// Subscribe with JetStream
-	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
-		// Parse the event
-		var event interface{}
-		if err := json.Unmarshal(msg.Data, &event); err != nil {
-			log.Printf("Error unmarshaling event from topic %s: %v", topic, err)
-			msg.Ack()
-			return
-		}
-
-		// Handle the event
-		if err := handler(event); err != nil {
-			log.Printf("Error handling event from topic %s: %v", topic, err)
-			// Don't ack the message so it can be redelivered
-			return
-		}
-
-		// Acknowledge the message
-		msg.Ack()
-	}, nats.Durable(consumerName), nats.AckWait(30*time.Second))
-
-	if err != nil {
-		return fmt.Errorf("failed to subscribe to topic %s: %w", topic, err)
-	}
-
-	n.subs[topic] = sub
-	log.Printf("Subscribed to topic: %s with consumer: %s", topic, consumerName)
-	return nil
-}
-
-// SubscribeWithConsumer subscribes to a topic with a custom consumer name
-func (n *NATSEventBus) SubscribeWithConsumer(topic string, consumerName string, handler EventHandler) error {
-	// Subscribe with JetStream using custom consumer name
 	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
 		// Parse the event
 		var event interface{}
@@ -348,7 +316,6 @@ type CashoutRequestEvent struct {
 
 // OddsUpdatedEvent represents an odds update event
 
-
 // EventResultEvent represents an event result event
 type EventResultEvent struct {
 	EventID   string `json:"event_id"`
@@ -489,8 +456,6 @@ func NewCashoutRequestEvent(betID, userID string, cashoutValue float64) *Cashout
 		Timestamp:    time.Now().UTC().Format(time.RFC3339),
 	}
 }
-
-
 
 // NewEventResultEvent creates a new event result event
 func NewEventResultEvent(eventID, result string) *EventResultEvent {

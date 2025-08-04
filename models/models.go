@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // User represents a user in the system
@@ -87,15 +88,19 @@ type UpdateEventRequest struct {
 
 // Market represents a betting market for an event
 type Market struct {
-	ID          uuid.UUID `json:"id" db:"id"`
-	EventID     uuid.UUID `json:"event_id" db:"event_id"`
-	Name        string    `json:"name" db:"name"` // "match_winner", "total_goals", "first_scorer", etc.
-	Description string    `json:"description" db:"description"`
-	Type        string    `json:"type" db:"type"`       // "1x2", "over_under", "handicap", "exact_score"
-	Status      string    `json:"status" db:"status"`   // "open", "suspended", "closed", "settled"
-	Version     int       `json:"version" db:"version"` // Version number for audit trail
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	EventID     uuid.UUID `json:"event_id" gorm:"type:uuid;not null"`
+	Name        string    `json:"name" gorm:"not null"`
+	Description string    `json:"description"`
+	Type        string    `json:"type" gorm:"not null"`
+	Status      string    `json:"status" gorm:"not null;default:'open'"`
+	Version     int       `json:"version" gorm:"not null;default:1"`
+	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	// GORM relationships
+	Event      Event       `json:"event,omitempty" gorm:"foreignKey:EventID"`
+	Selections []Selection `json:"selections,omitempty" gorm:"foreignKey:MarketID"`
 }
 
 // CreateMarketRequest represents a request to create a new market (without version)
@@ -103,7 +108,7 @@ type CreateMarketRequest struct {
 	EventID     uuid.UUID `json:"event_id" binding:"required"`
 	Name        string    `json:"name" binding:"required"` // "match_winner", "total_goals", "first_scorer", etc.
 	Description string    `json:"description"`
-	Type        string    `json:"type" binding:"required"` // "1x2", "over_under", "handicap", "exact_score"
+	Type        string    `json:"type" binding:"required"`   // "1x2", "over_under", "handicap", "exact_score"
 	Status      string    `json:"status" binding:"required"` // "open", "suspended", "closed", "settled"
 }
 
@@ -111,42 +116,48 @@ type CreateMarketRequest struct {
 type UpdateMarketRequest struct {
 	Name        string `json:"name"` // "match_winner", "total_goals", "first_scorer", etc.
 	Description string `json:"description"`
-	Type        string `json:"type"` // "1x2", "over_under", "handicap", "exact_score"
+	Type        string `json:"type"`   // "1x2", "over_under", "handicap", "exact_score"
 	Status      string `json:"status"` // "open", "suspended", "closed", "settled"
 }
 
 // Selection represents a betting option within a market
 type Selection struct {
-	ID        uuid.UUID `json:"id" db:"id"`
-	MarketID  uuid.UUID `json:"market_id" db:"market_id"`
-	Name      string    `json:"name" db:"name"`       // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
-	Status    string    `json:"status" db:"status"`   // "active", "suspended", "won", "lost"
-	Version   int       `json:"version" db:"version"` // Version number for audit trail
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	MarketID  uuid.UUID `json:"market_id" gorm:"type:uuid;not null"`
+	Name      string    `json:"name" gorm:"not null"`
+	Status    string    `json:"status" gorm:"not null;default:'active'"`
+	Version   int       `json:"version" gorm:"not null;default:1"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	// GORM relationships
+	Market Market `json:"market,omitempty" gorm:"foreignKey:MarketID"`
 }
 
 // CreateSelectionRequest represents a request to create a new selection (without version)
 type CreateSelectionRequest struct {
 	MarketID uuid.UUID `json:"market_id" binding:"required"`
-	Name     string    `json:"name" binding:"required"` // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
+	Name     string    `json:"name" binding:"required"`   // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
 	Status   string    `json:"status" binding:"required"` // "active", "suspended", "won", "lost"
 }
 
 // UpdateSelectionRequest represents a request to update a selection (without version)
 type UpdateSelectionRequest struct {
-	Name   string `json:"name"` // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
+	Name   string `json:"name"`   // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
 	Status string `json:"status"` // "active", "suspended", "won", "lost"
 }
 
 // Odds represents odds for a selection
 type Odds struct {
-	ID          uuid.UUID `json:"id" db:"id"`
-	SelectionID uuid.UUID `json:"selection_id" db:"selection_id"`
-	Odds        float64   `json:"odds" db:"odds"`
-	Version     int       `json:"version" db:"version"` // Version number for audit trail
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	SelectionID uuid.UUID `json:"selection_id" gorm:"type:uuid;not null;uniqueIndex"`
+	Odds        float64   `json:"odds" gorm:"not null"`
+	Version     int       `json:"version" gorm:"not null;default:1"`
+	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	// GORM relationships
+	// Note: Selection relationship removed to avoid circular reference
 }
 
 // CreateOddsRequest represents a request to create odds (without version)
@@ -183,17 +194,17 @@ type UpdateResultRequest struct {
 
 // Bet represents a user's bet
 type Bet struct {
-	ID           uuid.UUID `json:"id" db:"id"`
-	UserID       uuid.UUID `json:"user_id" db:"user_id"`
-	BetType      string    `json:"bet_type" db:"bet_type"` // "single", "double", "treble", "accumulator"
-	Amount       float64   `json:"amount" db:"amount"`
-	TotalOdds    float64   `json:"total_odds" db:"total_odds"`
-	Status       string    `json:"status" db:"status"` // "pending", "won", "lost", "void", "cancelled", "unsettle"
-	PotentialWin float64   `json:"potential_win" db:"potential_win"`
-	ActualWin    *float64  `json:"actual_win" db:"actual_win"` // Actual amount won (NULL if not settled yet)
+	ID           uuid.UUID  `json:"id" db:"id"`
+	UserID       uuid.UUID  `json:"user_id" db:"user_id"`
+	BetType      string     `json:"bet_type" db:"bet_type"` // "single", "double", "treble", "accumulator"
+	Amount       float64    `json:"amount" db:"amount"`
+	TotalOdds    float64    `json:"total_odds" db:"total_odds"`
+	Status       string     `json:"status" db:"status"` // "pending", "won", "lost", "void", "cancelled", "unsettle"
+	PotentialWin float64    `json:"potential_win" db:"potential_win"`
+	ActualWin    *float64   `json:"actual_win" db:"actual_win"` // Actual amount won (NULL if not settled yet)
 	SettledAt    *time.Time `json:"settled_at" db:"settled_at"` // Timestamp when the bet was settled (NULL if not settled yet)
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 // BetSelection represents a selection within a bet (for accumulator bets)
@@ -403,4 +414,61 @@ type HealthStatus struct {
 	Status    string                 `json:"status"`
 	Timestamp time.Time              `json:"timestamp"`
 	Metrics   map[string]interface{} `json:"metrics,omitempty"`
+}
+
+// BeforeCreate hooks to set UUID if not provided
+func (e *Event) BeforeCreate(tx *gorm.DB) error {
+	if e.ID == uuid.Nil {
+		e.ID = uuid.New()
+	}
+	return nil
+}
+
+func (m *Market) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
+}
+
+func (s *Selection) BeforeCreate(tx *gorm.DB) error {
+	if s.ID == uuid.Nil {
+		s.ID = uuid.New()
+	}
+	return nil
+}
+
+func (o *Odds) BeforeCreate(tx *gorm.DB) error {
+	if o.ID == uuid.Nil {
+		o.ID = uuid.New()
+	}
+	return nil
+}
+
+func (r *Result) BeforeCreate(tx *gorm.DB) error {
+	if r.ID == uuid.Nil {
+		r.ID = uuid.New()
+	}
+	return nil
+}
+
+func (s *Sport) BeforeCreate(tx *gorm.DB) error {
+	if s.ID == uuid.Nil {
+		s.ID = uuid.New()
+	}
+	return nil
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	if u.ID == uuid.Nil {
+		u.ID = uuid.New()
+	}
+	return nil
+}
+
+func (w *Wallet) BeforeCreate(tx *gorm.DB) error {
+	if w.ID == uuid.Nil {
+		w.ID = uuid.New()
+	}
+	return nil
 }
