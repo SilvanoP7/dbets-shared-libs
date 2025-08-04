@@ -156,6 +156,38 @@ func (n *NATSEventBus) Subscribe(topic string, handler EventHandler) error {
 	return nil
 }
 
+// SubscribeWithConsumer subscribes to a topic with JetStream using a custom consumer name
+func (n *NATSEventBus) SubscribeWithConsumer(topic string, consumerName string, handler EventHandler) error {
+	// Subscribe with JetStream using the specified consumer name
+	sub, err := n.js.Subscribe(topic, func(msg *nats.Msg) {
+		// Parse the event
+		var event interface{}
+		if err := json.Unmarshal(msg.Data, &event); err != nil {
+			log.Printf("Error unmarshaling event from topic %s: %v", topic, err)
+			msg.Ack()
+			return
+		}
+
+		// Handle the event
+		if err := handler(event); err != nil {
+			log.Printf("Error handling event from topic %s: %v", topic, err)
+			// Don't ack the message so it can be redelivered
+			return
+		}
+
+		// Acknowledge the message
+		msg.Ack()
+	}, nats.Durable(consumerName), nats.AckWait(30*time.Second))
+
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to topic %s with consumer %s: %w", topic, consumerName, err)
+	}
+
+	n.subs[topic] = sub
+	log.Printf("Subscribed to topic: %s with consumer: %s", topic, consumerName)
+	return nil
+}
+
 // SubscribeWithFilter subscribes to a topic with filtering capabilities
 func (n *NATSEventBus) SubscribeWithFilter(topic string, filter func(msg *nats.Msg) bool, handler EventHandler) error {
 	safeTopic := strings.ReplaceAll(topic, ".", "_")
