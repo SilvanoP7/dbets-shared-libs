@@ -103,8 +103,8 @@ type Market struct {
 	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	// GORM relationships
-	Event      Event       `json:"event,omitempty" gorm:"foreignKey:EventID"`
-	Selections []Selection `json:"selections,omitempty" gorm:"foreignKey:MarketID"`
+	Event Event `json:"event,omitempty" gorm:"foreignKey:EventID"`
+	// Note: Selections relationship removed to avoid circular reference
 }
 
 // CreateMarketRequest represents a request to create a new market (without version)
