@@ -284,14 +284,9 @@ func (c *Client) GetSportByName(name string) (*models.Sport, error) {
 		return nil, fmt.Errorf("failed to marshal sport data: %w", err)
 	}
 
-	var sport models.Sport
-        if err := json.Unmarshal(sportData, &sport); err == nil {
-                return &sport, nil
-        }
-
-        var sports []models.Sport
+	var sports []models.Sport
 	if err := json.Unmarshal(sportData, &sports); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal sport data: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal sports array: %w", err)
 	}
 
 	// Return the first sport if any found
@@ -336,14 +331,9 @@ func (c *Client) GetSportByExternalKey(externalKey string) (*models.Sport, error
 		return nil, fmt.Errorf("failed to marshal sport data: %w", err)
 	}
 
-	var sport models.Sport
-        if err := json.Unmarshal(sportData, &sport); err == nil {
-                return &sport, nil
-        }
-
-        var sports []models.Sport
+	var sports []models.Sport
 	if err := json.Unmarshal(sportData, &sports); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal sport data: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal sports array: %w", err)
 	}
 
 	// Return the first sport if any found
@@ -396,53 +386,6 @@ func (c *Client) GetEventByTitle(title string) (*models.Event, error) {
 	// Return the first event if any found
 	if len(events) == 0 {
 		return nil, fmt.Errorf("no event found with title: %s", title)
-	}
-
-	return &events[0], nil
-}
-
-// GetEventByExternalID retrieves an event by external ID from the events service
-func (c *Client) GetEventByExternalID(externalID string) (*models.Event, error) {
-	url := fmt.Sprintf("%s/api/v1/events?external_id=%s", c.baseURL, externalID)
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("events service request failed with status: %d", resp.StatusCode)
-	}
-
-	var response models.APIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	if !response.Success {
-		return nil, fmt.Errorf("events service returned error: %s", response.Error)
-	}
-
-	// Parse the events array from the response
-	eventData, err := json.Marshal(response.Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal event data: %w", err)
-	}
-
-	var events []models.Event
-	if err := json.Unmarshal(eventData, &events); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal events array: %w", err)
-	}
-
-	// Return the first event if any found
-	if len(events) == 0 {
-		return nil, fmt.Errorf("no event found with external ID: %s", externalID)
 	}
 
 	return &events[0], nil
