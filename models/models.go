@@ -33,6 +33,10 @@ type Sport struct {
 	Name        string    `json:"name" db:"name"`
 	Description string    `json:"description" db:"description"`
 	Active      bool      `json:"active" db:"active"`
+	// External API tracking
+	ExternalKey string `json:"external_key" db:"external_key"` // The Odds API sport key
+	Group       string `json:"group" db:"group"`               // Sport group (e.g., "American Football")
+	HasOutrights bool  `json:"has_outrights" db:"has_outrights"` // Whether sport has outright markets
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -54,8 +58,11 @@ type Event struct {
 	Active      bool      `json:"active" gorm:"not null;default:true"`
 	Display     bool      `json:"display" gorm:"not null;default:true"`
 	Version     int       `json:"version" gorm:"not null;default:1"`
-	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	// External API tracking
+	ExternalID string `json:"external_id" gorm:"uniqueIndex"` // The Odds API event ID
+	SportKey   string `json:"sport_key" gorm:"index"`         // The Odds API sport key
+	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt  time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	// GORM relationships
 	Markets []Market `json:"markets,omitempty" gorm:"foreignKey:EventID"`
@@ -76,6 +83,9 @@ type CreateEventRequest struct {
 	Result      string    `json:"result"`                    // "home_win", "away_win", "draw", "cancelled"
 	Active      bool      `json:"active"`                    // Whether the event is active for betting
 	Display     bool      `json:"display"`                   // Whether the event should be displayed
+	// External API tracking
+	ExternalID string `json:"external_id"` // The Odds API event ID
+	SportKey   string `json:"sport_key"`   // The Odds API sport key
 }
 
 // UpdateEventRequest represents a request to update an event (without version)
@@ -106,6 +116,9 @@ type Market struct {
 	Active      bool      `json:"active" gorm:"not null;default:true"`
 	Display     bool      `json:"display" gorm:"not null;default:true"`
 	Version     int       `json:"version" gorm:"not null;default:1"`
+	// External API tracking
+	ExternalKey string    `json:"external_key" gorm:"index"` // The Odds API market key
+	LastUpdate  time.Time `json:"last_update"`               // When odds were last updated
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
@@ -122,6 +135,9 @@ type CreateMarketRequest struct {
 	Status      string    `json:"status" binding:"required"` // "open", "suspended", "closed", "settled"
 	Active      bool      `json:"active"`                    // Whether the market is active for betting
 	Display     bool      `json:"display"`                   // Whether the market should be displayed
+	// External API tracking
+	ExternalKey string    `json:"external_key"` // The Odds API market key
+	LastUpdate  time.Time `json:"last_update"`  // When odds were last updated
 }
 
 // UpdateMarketRequest represents a request to update a market (without version)
@@ -143,8 +159,11 @@ type Selection struct {
 	Active    bool      `json:"active" gorm:"not null;default:true"`
 	Display   bool      `json:"display" gorm:"not null;default:true"`
 	Version   int       `json:"version" gorm:"not null;default:1"`
-	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	// External API tracking
+	ExternalID string  `json:"external_id" gorm:"uniqueIndex"` // The Odds API selection ID
+	Point      float64 `json:"point"`                          // For spreads, totals, etc.
+	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt  time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	// Manual odds field for API responses
 	Odds *Odds `json:"odds,omitempty" gorm:"-"`
@@ -157,6 +176,9 @@ type CreateSelectionRequest struct {
 	Status   string    `json:"status" binding:"required"` // "active", "suspended", "won", "lost"
 	Active   bool      `json:"active"`                    // Whether the selection is active for betting
 	Display  bool      `json:"display"`                   // Whether the selection should be displayed
+	// External API tracking
+	ExternalID string  `json:"external_id"` // The Odds API selection ID
+	Point      float64 `json:"point"`       // For spreads, totals, etc.
 }
 
 // UpdateSelectionRequest represents a request to update a selection (without version)
