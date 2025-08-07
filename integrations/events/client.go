@@ -285,11 +285,11 @@ func (c *Client) GetSportByName(name string) (*models.Sport, error) {
 	}
 
 	var sport models.Sport
-        if err := json.Unmarshal(sportData, &sport); err == nil {
-                return &sport, nil
-        }
+	if err := json.Unmarshal(sportData, &sport); err == nil {
+		return &sport, nil
+	}
 
-        var sports []models.Sport
+	var sports []models.Sport
 	if err := json.Unmarshal(sportData, &sports); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal sport data: %w", err)
 	}
@@ -337,11 +337,11 @@ func (c *Client) GetSportByExternalKey(externalKey string) (*models.Sport, error
 	}
 
 	var sport models.Sport
-        if err := json.Unmarshal(sportData, &sport); err == nil {
-                return &sport, nil
-        }
+	if err := json.Unmarshal(sportData, &sport); err == nil {
+		return &sport, nil
+	}
 
-        var sports []models.Sport
+	var sports []models.Sport
 	if err := json.Unmarshal(sportData, &sports); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal sport data: %w", err)
 	}
@@ -581,6 +581,9 @@ func (c *Client) GetSelectionByName(name string, marketID string) (*models.Selec
 		return nil, fmt.Errorf("failed to unmarshal selections array: %w", err)
 	}
 
+	// Debug logging
+	fmt.Printf("GetSelectionByName: Found %d selections for name '%s' in market '%s'\n", len(selections), name, marketID)
+
 	// Return the first selection if any found
 	if len(selections) == 0 {
 		return nil, fmt.Errorf("no selection found with name: %s", name)
@@ -627,6 +630,9 @@ func (c *Client) GetSelectionByExternalID(externalID string, marketID string) (*
 	if err := json.Unmarshal(selectionData, &selections); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal selections array: %w", err)
 	}
+
+	// Debug logging
+	fmt.Printf("GetSelectionByExternalID: Found %d selections for external ID '%s' in market '%s'\n", len(selections), externalID, marketID)
 
 	// Return the first selection if any found
 	if len(selections) == 0 {
