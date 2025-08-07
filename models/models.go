@@ -34,11 +34,11 @@ type Sport struct {
 	Description string    `json:"description" db:"description"`
 	Active      bool      `json:"active" db:"active"`
 	// External API tracking
-	ExternalKey string `json:"external_key" db:"external_key"` // The Odds API sport key
-	Group       string `json:"group" db:"group"`               // Sport group (e.g., "American Football")
-	HasOutrights bool  `json:"has_outrights" db:"has_outrights"` // Whether sport has outright markets
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ExternalKey  string    `json:"external_key" db:"external_key"`   // The Odds API sport key
+	Group        string    `json:"group" db:"group"`                 // Sport group (e.g., "American Football")
+	HasOutrights bool      `json:"has_outrights" db:"has_outrights"` // Whether sport has outright markets
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // Event represents a sports event
@@ -59,8 +59,8 @@ type Event struct {
 	Display     bool      `json:"display" gorm:"not null;default:true"`
 	Version     int       `json:"version" gorm:"not null;default:1"`
 	// External API tracking
-	ExternalID string `json:"external_id" gorm:"uniqueIndex"` // The Odds API event ID
-	SportKey   string `json:"sport_key" gorm:"index"`         // The Odds API sport key
+	ExternalID string    `json:"external_id" gorm:"uniqueIndex"` // The Odds API event ID
+	SportKey   string    `json:"sport_key" gorm:"index"`         // The Odds API sport key
 	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt  time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
@@ -152,16 +152,16 @@ type UpdateMarketRequest struct {
 
 // Selection represents a betting option within a market
 type Selection struct {
-	ID        uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	MarketID  uuid.UUID `json:"market_id" gorm:"type:uuid;not null"`
-	Name      string    `json:"name" gorm:"not null"`
-	Status    string    `json:"status" gorm:"not null;default:'active'"`
-	Active    bool      `json:"active" gorm:"not null;default:true"`
-	Display   bool      `json:"display" gorm:"not null;default:true"`
-	Version   int       `json:"version" gorm:"not null;default:1"`
+	ID       uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	MarketID uuid.UUID `json:"market_id" gorm:"type:uuid;not null"`
+	Name     string    `json:"name" gorm:"not null"`
+	Status   string    `json:"status" gorm:"not null;default:'active'"`
+	Active   bool      `json:"active" gorm:"not null;default:true"`
+	Display  bool      `json:"display" gorm:"not null;default:true"`
+	Version  int       `json:"version" gorm:"not null;default:1"`
 	// External API tracking
-	ExternalID string  `json:"external_id" gorm:"uniqueIndex"` // The Odds API selection ID
-	Point      float64 `json:"point"`                          // For spreads, totals, etc.
+	ExternalID string    `json:"external_id" gorm:"uniqueIndex"` // The Odds API selection ID
+	Point      float64   `json:"point"`                          // For spreads, totals, etc.
 	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt  time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 

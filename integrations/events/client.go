@@ -297,6 +297,53 @@ func (c *Client) GetSportByName(name string) (*models.Sport, error) {
 	return &sports[0], nil
 }
 
+// GetSportByExternalKey retrieves a sport by external key from the events service
+func (c *Client) GetSportByExternalKey(externalKey string) (*models.Sport, error) {
+	url := fmt.Sprintf("%s/api/v1/sports?external_key=%s", c.baseURL, externalKey)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("events service request failed with status: %d", resp.StatusCode)
+	}
+
+	var response models.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if !response.Success {
+		return nil, fmt.Errorf("events service returned error: %s", response.Error)
+	}
+
+	// Parse the sports array from the response
+	sportData, err := json.Marshal(response.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal sport data: %w", err)
+	}
+
+	var sports []models.Sport
+	if err := json.Unmarshal(sportData, &sports); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal sports array: %w", err)
+	}
+
+	// Return the first sport if any found
+	if len(sports) == 0 {
+		return nil, fmt.Errorf("no sport found with external key: %s", externalKey)
+	}
+
+	return &sports[0], nil
+}
+
 // GetEventByTitle retrieves an event by title from the events service
 func (c *Client) GetEventByTitle(title string) (*models.Event, error) {
 	url := fmt.Sprintf("%s/api/v1/events?title=%s", c.baseURL, title)
