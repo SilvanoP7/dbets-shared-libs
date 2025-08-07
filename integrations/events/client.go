@@ -495,6 +495,53 @@ func (c *Client) GetMarketByName(name string, eventID string) (*models.Market, e
 	return &markets[0], nil
 }
 
+// GetMarketByExternalKey retrieves a market by external key from the events service
+func (c *Client) GetMarketByExternalKey(externalKey string, eventID string) (*models.Market, error) {
+	url := fmt.Sprintf("%s/api/v1/markets?external_key=%s&event_id=%s", c.baseURL, externalKey, eventID)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("events service request failed with status: %d", resp.StatusCode)
+	}
+
+	var response models.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if !response.Success {
+		return nil, fmt.Errorf("events service returned error: %s", response.Error)
+	}
+
+	// Parse the markets array from the response
+	marketData, err := json.Marshal(response.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal market data: %w", err)
+	}
+
+	var markets []models.Market
+	if err := json.Unmarshal(marketData, &markets); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal markets array: %w", err)
+	}
+
+	// Return the first market if any found
+	if len(markets) == 0 {
+		return nil, fmt.Errorf("no market found with external key: %s", externalKey)
+	}
+
+	return &markets[0], nil
+}
+
 // GetSelectionByName retrieves a selection by name from the events service
 func (c *Client) GetSelectionByName(name string, marketID string) (*models.Selection, error) {
 	url := fmt.Sprintf("%s/api/v1/selections?name=%s&market_id=%s", c.baseURL, name, marketID)
@@ -537,6 +584,53 @@ func (c *Client) GetSelectionByName(name string, marketID string) (*models.Selec
 	// Return the first selection if any found
 	if len(selections) == 0 {
 		return nil, fmt.Errorf("no selection found with name: %s", name)
+	}
+
+	return &selections[0], nil
+}
+
+// GetSelectionByExternalID retrieves a selection by external ID from the events service
+func (c *Client) GetSelectionByExternalID(externalID string, marketID string) (*models.Selection, error) {
+	url := fmt.Sprintf("%s/api/v1/selections?external_id=%s&market_id=%s", c.baseURL, externalID, marketID)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("events service request failed with status: %d", resp.StatusCode)
+	}
+
+	var response models.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if !response.Success {
+		return nil, fmt.Errorf("events service returned error: %s", response.Error)
+	}
+
+	// Parse the selections array from the response
+	selectionData, err := json.Marshal(response.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal selection data: %w", err)
+	}
+
+	var selections []models.Selection
+	if err := json.Unmarshal(selectionData, &selections); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal selections array: %w", err)
+	}
+
+	// Return the first selection if any found
+	if len(selections) == 0 {
+		return nil, fmt.Errorf("no selection found with external ID: %s", externalID)
 	}
 
 	return &selections[0], nil
