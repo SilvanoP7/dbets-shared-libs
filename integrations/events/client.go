@@ -29,7 +29,7 @@ func NewClient(baseURL string) *Client {
 // CreateSport creates a new sport in the events service and returns the created sport
 func (c *Client) CreateSport(sport models.Sport) (*models.Sport, error) {
 	url := fmt.Sprintf("%s/api/v1/sports", c.baseURL)
-	
+
 	jsonData, err := json.Marshal(sport)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal sport: %w", err)
@@ -78,7 +78,7 @@ func (c *Client) CreateSport(sport models.Sport) (*models.Sport, error) {
 // CreateEvent creates a new event in the events service and returns the created event
 func (c *Client) CreateEvent(event models.CreateEventRequest) (*models.Event, error) {
 	url := fmt.Sprintf("%s/api/v1/events", c.baseURL)
-	
+
 	jsonData, err := json.Marshal(event)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal event: %w", err)
@@ -127,7 +127,7 @@ func (c *Client) CreateEvent(event models.CreateEventRequest) (*models.Event, er
 // CreateMarket creates a new market in the events service and returns the created market
 func (c *Client) CreateMarket(market models.CreateMarketRequest) (*models.Market, error) {
 	url := fmt.Sprintf("%s/api/v1/markets", c.baseURL)
-	
+
 	jsonData, err := json.Marshal(market)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal market: %w", err)
@@ -176,7 +176,7 @@ func (c *Client) CreateMarket(market models.CreateMarketRequest) (*models.Market
 // CreateSelection creates a new selection in the events service and returns the created selection
 func (c *Client) CreateSelection(selection models.CreateSelectionRequest) (*models.Selection, error) {
 	url := fmt.Sprintf("%s/api/v1/selections", c.baseURL)
-	
+
 	jsonData, err := json.Marshal(selection)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal selection: %w", err)
@@ -225,7 +225,7 @@ func (c *Client) CreateSelection(selection models.CreateSelectionRequest) (*mode
 // UpdateOdds updates odds for a specific selection
 func (c *Client) UpdateOdds(selectionID string, odds models.UpdateOddsRequest) error {
 	url := fmt.Sprintf("%s/api/v1/selections/%s/odds", c.baseURL, selectionID)
-	
+
 	jsonData, err := json.Marshal(odds)
 	if err != nil {
 		return fmt.Errorf("failed to marshal odds: %w", err)
@@ -278,18 +278,23 @@ func (c *Client) GetSportByName(name string) (*models.Sport, error) {
 		return nil, fmt.Errorf("events service returned error: %s", response.Error)
 	}
 
-	// Parse the sport from the response
+	// Parse the sports array from the response
 	sportData, err := json.Marshal(response.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal sport data: %w", err)
 	}
 
-	var sport models.Sport
-	if err := json.Unmarshal(sportData, &sport); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal sport: %w", err)
+	var sports []models.Sport
+	if err := json.Unmarshal(sportData, &sports); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal sports array: %w", err)
 	}
 
-	return &sport, nil
+	// Return the first sport if any found
+	if len(sports) == 0 {
+		return nil, fmt.Errorf("no sport found with name: %s", name)
+	}
+
+	return &sports[0], nil
 }
 
 // GetEventByTitle retrieves an event by title from the events service
@@ -320,18 +325,23 @@ func (c *Client) GetEventByTitle(title string) (*models.Event, error) {
 		return nil, fmt.Errorf("events service returned error: %s", response.Error)
 	}
 
-	// Parse the event from the response
+	// Parse the events array from the response
 	eventData, err := json.Marshal(response.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal event data: %w", err)
 	}
 
-	var event models.Event
-	if err := json.Unmarshal(eventData, &event); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal event: %w", err)
+	var events []models.Event
+	if err := json.Unmarshal(eventData, &events); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal events array: %w", err)
 	}
 
-	return &event, nil
+	// Return the first event if any found
+	if len(events) == 0 {
+		return nil, fmt.Errorf("no event found with title: %s", title)
+	}
+
+	return &events[0], nil
 }
 
 // GetMarketByName retrieves a market by name from the events service
@@ -362,18 +372,23 @@ func (c *Client) GetMarketByName(name string, eventID string) (*models.Market, e
 		return nil, fmt.Errorf("events service returned error: %s", response.Error)
 	}
 
-	// Parse the market from the response
+	// Parse the markets array from the response
 	marketData, err := json.Marshal(response.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal market data: %w", err)
 	}
 
-	var market models.Market
-	if err := json.Unmarshal(marketData, &market); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal market: %w", err)
+	var markets []models.Market
+	if err := json.Unmarshal(marketData, &markets); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal markets array: %w", err)
 	}
 
-	return &market, nil
+	// Return the first market if any found
+	if len(markets) == 0 {
+		return nil, fmt.Errorf("no market found with name: %s", name)
+	}
+
+	return &markets[0], nil
 }
 
 // GetSelectionByName retrieves a selection by name from the events service
@@ -404,16 +419,21 @@ func (c *Client) GetSelectionByName(name string, marketID string) (*models.Selec
 		return nil, fmt.Errorf("events service returned error: %s", response.Error)
 	}
 
-	// Parse the selection from the response
+	// Parse the selections array from the response
 	selectionData, err := json.Marshal(response.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal selection data: %w", err)
 	}
 
-	var selection models.Selection
-	if err := json.Unmarshal(selectionData, &selection); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal selection: %w", err)
+	var selections []models.Selection
+	if err := json.Unmarshal(selectionData, &selections); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal selections array: %w", err)
 	}
 
-	return &selection, nil
+	// Return the first selection if any found
+	if len(selections) == 0 {
+		return nil, fmt.Errorf("no selection found with name: %s", name)
+	}
+
+	return &selections[0], nil
 }
