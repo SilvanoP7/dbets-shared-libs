@@ -222,9 +222,9 @@ func (c *Client) CreateSelection(selection models.CreateSelectionRequest) (*mode
 	return &createdSelection, nil
 }
 
-// UpdateOdds updates odds for a specific selection
+// UpdateOdds updates odds for a selection
 func (c *Client) UpdateOdds(selectionID string, odds models.UpdateOddsRequest) error {
-	url := fmt.Sprintf("%s/api/v1/selections/%s/odds", c.baseURL, selectionID)
+	url := fmt.Sprintf("%s/api/v1/odds/%s", c.baseURL, selectionID)
 
 	jsonData, err := json.Marshal(odds)
 	if err != nil {
@@ -243,7 +243,7 @@ func (c *Client) UpdateOdds(selectionID string, odds models.UpdateOddsRequest) e
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("events service request failed with status: %d", resp.StatusCode)
 	}
 
