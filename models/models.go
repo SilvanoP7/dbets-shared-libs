@@ -89,9 +89,9 @@ type UpdateEventRequest struct {
 	AwayTeam    string    `json:"away_team"`
 	StartTime   time.Time `json:"start_time"`
 	EndTime     time.Time `json:"end_time"`
-	Status      string    `json:"status"` // "upcoming", "live", "finished", "cancelled"
-	Result      string    `json:"result"` // "home_win", "away_win", "draw", "cancelled"
-	Active      bool      `json:"active"` // Whether the event is active for betting
+	Status      string    `json:"status"`  // "upcoming", "live", "finished", "cancelled"
+	Result      string    `json:"result"`  // "home_win", "away_win", "draw", "cancelled"
+	Active      bool      `json:"active"`  // Whether the event is active for betting
 	Display     bool      `json:"display"` // Whether the event should be displayed
 }
 
@@ -128,9 +128,9 @@ type CreateMarketRequest struct {
 type UpdateMarketRequest struct {
 	Name        string `json:"name"` // "match_winner", "total_goals", "first_scorer", etc.
 	Description string `json:"description"`
-	Type        string `json:"type"`   // "1x2", "over_under", "handicap", "exact_score"
-	Status      string `json:"status"` // "open", "suspended", "closed", "settled"
-	Active      bool   `json:"active"` // Whether the market is active for betting
+	Type        string `json:"type"`    // "1x2", "over_under", "handicap", "exact_score"
+	Status      string `json:"status"`  // "open", "suspended", "closed", "settled"
+	Active      bool   `json:"active"`  // Whether the market is active for betting
 	Display     bool   `json:"display"` // Whether the market should be displayed
 }
 
@@ -161,9 +161,9 @@ type CreateSelectionRequest struct {
 
 // UpdateSelectionRequest represents a request to update a selection (without version)
 type UpdateSelectionRequest struct {
-	Name    string `json:"name"`   // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
-	Status  string `json:"status"` // "active", "suspended", "won", "lost"
-	Active  bool   `json:"active"` // Whether the selection is active for betting
+	Name    string `json:"name"`    // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
+	Status  string `json:"status"`  // "active", "suspended", "won", "lost"
+	Active  bool   `json:"active"`  // Whether the selection is active for betting
 	Display bool   `json:"display"` // Whether the selection should be displayed
 }
 
