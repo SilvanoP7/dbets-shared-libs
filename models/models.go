@@ -51,6 +51,8 @@ type Event struct {
 	EndTime     time.Time `json:"end_time" gorm:"not null"`
 	Status      string    `json:"status" gorm:"not null;default:'upcoming'"`
 	Result      string    `json:"result"`
+	Active      bool      `json:"active" gorm:"not null;default:true"`
+	Display     bool      `json:"display" gorm:"not null;default:true"`
 	Version     int       `json:"version" gorm:"not null;default:1"`
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
@@ -72,6 +74,8 @@ type CreateEventRequest struct {
 	EndTime     time.Time `json:"end_time" binding:"required"`
 	Status      string    `json:"status" binding:"required"` // "upcoming", "live", "finished", "cancelled"
 	Result      string    `json:"result"`                    // "home_win", "away_win", "draw", "cancelled"
+	Active      bool      `json:"active"`                    // Whether the event is active for betting
+	Display     bool      `json:"display"`                   // Whether the event should be displayed
 }
 
 // UpdateEventRequest represents a request to update an event (without version)
@@ -87,6 +91,8 @@ type UpdateEventRequest struct {
 	EndTime     time.Time `json:"end_time"`
 	Status      string    `json:"status"` // "upcoming", "live", "finished", "cancelled"
 	Result      string    `json:"result"` // "home_win", "away_win", "draw", "cancelled"
+	Active      bool      `json:"active"` // Whether the event is active for betting
+	Display     bool      `json:"display"` // Whether the event should be displayed
 }
 
 // Market represents a betting market for an event
@@ -97,6 +103,8 @@ type Market struct {
 	Description string    `json:"description"`
 	Type        string    `json:"type" gorm:"not null"`
 	Status      string    `json:"status" gorm:"not null;default:'open'"`
+	Active      bool      `json:"active" gorm:"not null;default:true"`
+	Display     bool      `json:"display" gorm:"not null;default:true"`
 	Version     int       `json:"version" gorm:"not null;default:1"`
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
@@ -112,6 +120,8 @@ type CreateMarketRequest struct {
 	Description string    `json:"description"`
 	Type        string    `json:"type" binding:"required"`   // "1x2", "over_under", "handicap", "exact_score"
 	Status      string    `json:"status" binding:"required"` // "open", "suspended", "closed", "settled"
+	Active      bool      `json:"active"`                    // Whether the market is active for betting
+	Display     bool      `json:"display"`                   // Whether the market should be displayed
 }
 
 // UpdateMarketRequest represents a request to update a market (without version)
@@ -120,6 +130,8 @@ type UpdateMarketRequest struct {
 	Description string `json:"description"`
 	Type        string `json:"type"`   // "1x2", "over_under", "handicap", "exact_score"
 	Status      string `json:"status"` // "open", "suspended", "closed", "settled"
+	Active      bool   `json:"active"` // Whether the market is active for betting
+	Display     bool   `json:"display"` // Whether the market should be displayed
 }
 
 // Selection represents a betting option within a market
@@ -128,6 +140,8 @@ type Selection struct {
 	MarketID  uuid.UUID `json:"market_id" gorm:"type:uuid;not null"`
 	Name      string    `json:"name" gorm:"not null"`
 	Status    string    `json:"status" gorm:"not null;default:'active'"`
+	Active    bool      `json:"active" gorm:"not null;default:true"`
+	Display   bool      `json:"display" gorm:"not null;default:true"`
 	Version   int       `json:"version" gorm:"not null;default:1"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
@@ -141,12 +155,16 @@ type CreateSelectionRequest struct {
 	MarketID uuid.UUID `json:"market_id" binding:"required"`
 	Name     string    `json:"name" binding:"required"`   // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
 	Status   string    `json:"status" binding:"required"` // "active", "suspended", "won", "lost"
+	Active   bool      `json:"active"`                    // Whether the selection is active for betting
+	Display  bool      `json:"display"`                   // Whether the selection should be displayed
 }
 
 // UpdateSelectionRequest represents a request to update a selection (without version)
 type UpdateSelectionRequest struct {
-	Name   string `json:"name"`   // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
-	Status string `json:"status"` // "active", "suspended", "won", "lost"
+	Name    string `json:"name"`   // "Home Win", "Away Win", "Draw", "Over 2.5", etc.
+	Status  string `json:"status"` // "active", "suspended", "won", "lost"
+	Active  bool   `json:"active"` // Whether the selection is active for betting
+	Display bool   `json:"display"` // Whether the selection should be displayed
 }
 
 // Odds represents odds for a selection
