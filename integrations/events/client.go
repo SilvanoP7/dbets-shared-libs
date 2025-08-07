@@ -284,9 +284,14 @@ func (c *Client) GetSportByName(name string) (*models.Sport, error) {
 		return nil, fmt.Errorf("failed to marshal sport data: %w", err)
 	}
 
-	var sports []models.Sport
+	var sport models.Sport
+        if err := json.Unmarshal(sportData, &sport); err == nil {
+                return &sport, nil
+        }
+
+        var sports []models.Sport
 	if err := json.Unmarshal(sportData, &sports); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal sports array: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal sport data: %w", err)
 	}
 
 	// Return the first sport if any found
@@ -331,9 +336,14 @@ func (c *Client) GetSportByExternalKey(externalKey string) (*models.Sport, error
 		return nil, fmt.Errorf("failed to marshal sport data: %w", err)
 	}
 
-	var sports []models.Sport
+	var sport models.Sport
+        if err := json.Unmarshal(sportData, &sport); err == nil {
+                return &sport, nil
+        }
+
+        var sports []models.Sport
 	if err := json.Unmarshal(sportData, &sports); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal sports array: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal sport data: %w", err)
 	}
 
 	// Return the first sport if any found
