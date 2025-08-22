@@ -165,8 +165,8 @@ type Selection struct {
 	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt  time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
-	// Manual odds field for API responses
-	Odds *Odds `json:"odds,omitempty" gorm:"-"`
+	// GORM relationship for odds
+	Odds *Odds `json:"odds,omitempty" gorm:"foreignKey:SelectionID"`
 }
 
 // CreateSelectionRequest represents a request to create a new selection (without version)
