@@ -193,7 +193,17 @@ type UpdateSelectionRequest struct {
 type Odds struct {
 	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	SelectionID uuid.UUID `json:"selection_id" gorm:"type:uuid;not null;uniqueIndex"`
-	Odds        float64   `json:"odds" gorm:"not null"`
+	
+	// Store fractional odds as integers for maximum precision
+	FractionalNumerator   int     `json:"fractional_numerator" gorm:"not null"`   // e.g., 5 for "5/2"
+	FractionalDenominator int     `json:"fractional_denominator" gorm:"not null"` // e.g., 2 for "5/2"
+	
+	// Derived decimal odds (calculated field, not stored in DB)
+	DecimalOdds float64 `json:"decimal_odds" gorm:"-"` // e.g., 3.50
+	
+	// Original format from API for reference
+	OriginalFormat string `json:"original_format" gorm:"not null;default:'fractional'"` // "fractional", "decimal", "american"
+	
 	Version     int       `json:"version" gorm:"not null;default:1"`
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
@@ -205,12 +215,23 @@ type Odds struct {
 // CreateOddsRequest represents a request to create odds (without version)
 type CreateOddsRequest struct {
 	SelectionID uuid.UUID `json:"selection_id" binding:"required"`
-	Odds        float64   `json:"odds" binding:"required,gt=0"`
+	
+	// Fractional odds components
+	FractionalNumerator   int    `json:"fractional_numerator" binding:"required,gt=0"`   // e.g., 5 for "5/2"
+	FractionalDenominator int    `json:"fractional_denominator" binding:"required,gt=0"` // e.g., 2 for "5/2"
+	
+	// Optional: original format from API
+	OriginalFormat string `json:"original_format,omitempty"` // "fractional", "decimal", "american"
 }
 
 // UpdateOddsRequest represents a request to update odds (without version)
 type UpdateOddsRequest struct {
-	Odds float64 `json:"odds" binding:"required,gt=0"`
+	// Fractional odds components
+	FractionalNumerator   int    `json:"fractional_numerator" binding:"required,gt=0"`   // e.g., 5 for "5/2"
+	FractionalDenominator int    `json:"fractional_denominator" binding:"required,gt=0"` // e.g., 2 for "5/2"`
+	
+	// Optional: original format from API
+	OriginalFormat string `json:"original_format,omitempty"` // "fractional", "decimal", "american"
 }
 
 // Result represents a result for a selection
